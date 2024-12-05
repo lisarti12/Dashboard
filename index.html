@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/drilldown.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="script.js" defer></script>
+    <style>
+        #lineChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Crypto Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-1">
+        <div class="row text-center mb-1">
+            <!-- KPI Cards -->
+            <div class="col-md-3 mb-1">
+                <div class="card shadow-sm" style="background-color: #f8d7da;">
+                    <div class="card-body p-1">
+                        <h5 class="card-title">Bitcoin Price</h5>
+                        <h2 class="display-6" id="kpiBtcPrice">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-1">
+                <div class="card shadow-sm" style="background-color: #d4edda;">
+                    <div class="card-body p-1">
+                        <h5 class="card-title">Ethereum Price</h5>
+                        <h2 class="display-6" id="kpiEthPrice">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-1">
+                <div class="card shadow-sm" style="background-color: #d1ecf1;">
+                    <div class="card-body p-1">
+                        <h5 class="card-title">Dogecoin Price</h5>
+                        <h2 class="display-6" id="kpiDogePrice">$0.0000</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-1">
+                <div class="card shadow-sm" style="background-color: #fff3cd;">
+                    <div class="card-body p-1">
+                        <h5 class="card-title">Solana Price</h5>
+                        <h2 class="display-6" id="kpiSolPrice">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <!-- Cryptocurrency Table -->
+            <div class="col-md-6 mb-1">
+                <div class="card shadow-sm">
+                    <div class="card-body p-1 d-flex justify-content-center">
+                        <table class="table table-sm table-hover" id="cryptoTable">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Symbol</th>
+                                    <th>Market Cap</th>
+                                    <th>Current Price</th>
+                                    <th>Volume</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr data-coin="bitcoin">
+                                    <td>Bitcoin</td>
+                                    <td>BTC</td>
+                                    <td id="btcMarketCap">Loading...</td>
+                                    <td id="btcPrice">Loading...</td>
+                                    <td id="btcVolume">Loading...</td>
+                                </tr>
+                                <tr data-coin="ethereum">
+                                    <td>Ethereum</td>
+                                    <td>ETH</td>
+                                    <td id="ethMarketCap">Loading...</td>
+                                    <td id="ethPrice">Loading...</td>
+                                    <td id="ethVolume">Loading...</td>
+                                </tr>
+                                <tr data-coin="dogecoin">
+                                    <td>Dogecoin</td>
+                                    <td>DOGE</td>
+                                    <td id="dogeMarketCap">Loading...</td>
+                                    <td id="dogePrice">Loading...</td>
+                                    <td id="dogeVolume">Loading...</td>
+                                </tr>
+                                <tr data-coin="solana">
+                                    <td>Solana</td>
+                                    <td>SOL</td>
+                                    <td id="solMarketCap">Loading...</td>
+                                    <td id="solPrice">Loading...</td>
+                                    <td id="solVolume">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="col-md-4 mb-1">
+                <div class="card shadow-sm">
+                    <div class="card-body p-1 d-flex justify-content-center">
+                        <canvas id="barChart" style="height: 700px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-1">
+                <div class="card shadow-sm">
+                    <div class="card-body p-1 d-flex justify-content-center" style="height: 300px; width: 650px;">
+                        <canvas id="lineChart" style="width: 80%; height: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-1 mt-2">
+                <div class="card shadow-sm">
+                    <div class="card-body p-1 d-flex justify-content-center">
+                        <div id="drilldownChart" style="width:80%; height:250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
