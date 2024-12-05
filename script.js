@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const barChart = new Chart(ctxBar, {
         type: 'bar',
         data: {
-            labels: [], // Placeholder, populated dynamically
+            labels: [],
             datasets: [{
                 label: 'Market Cap (in billions)',
                 data: [],
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lineChart = new Chart(ctxLine, {
         type: 'line',
         data: {
-            labels: [], // Placeholder, populated dynamically
+            labels: [],
             datasets: [
                 { label: 'Price', data: [], borderColor: 'rgba(54, 162, 235, 1)', fill: false }
             ]
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cachedData = null;
     let lastFetchTime = 0;
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    const CACHE_DURATION = 5 * 60 * 1000;
 
     async function fetchCryptoData() {
         const now = Date.now();
@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateKpis(data);
             populateTable(data);
 
-            // Show all data initially
             updateCharts(null, data);
             return data;
         } catch (error) {
@@ -93,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCharts(selectedCoin, data) {
         if (selectedCoin) {
-            // Show data for selected coin
             const marketCap = data[selectedCoin].usd_market_cap / 1e9;
             const price = data[selectedCoin].usd;
 
@@ -101,11 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
             barChart.data.datasets[0].data = [marketCap];
             barChart.update();
 
-            lineChart.data.labels = ['Current']; // Replace with time series if available
+            lineChart.data.labels = ['Current'];
             lineChart.data.datasets[0].data = [price];
             lineChart.update();
         } else {
-            // Show data for all coins
             barChart.data.labels = ['Bitcoin', 'Ethereum', 'Dogecoin', 'Solana'];
             barChart.data.datasets[0].data = [
                 data.bitcoin.usd_market_cap / 1e9,
@@ -155,27 +152,24 @@ document.addEventListener('DOMContentLoaded', () => {
         lineChart.update();
     }
 
-    // Add event listener for table row click with debounce
     document.querySelectorAll('#cryptoTable tbody tr').forEach(row => {
         row.addEventListener('click', debounce(async function () {
             const selectedCoin = this.getAttribute('data-coin');
-            const data = await fetchCryptoData(); // Fetch the latest data
-            updateCharts(selectedCoin, data); // Update bar chart with selected coin's data
+            const data = await fetchCryptoData();
+            updateCharts(selectedCoin, data);
 
-            // Fetch and update line chart with historical data
             const historicalPrices = await fetchHistoricalData(selectedCoin);
             updateLineChart(historicalPrices);
-        }, 500)); // 500ms debounce
+        }, 500));
     });
 
     fetchCryptoData();
 
-    // Fetch current volume data for multiple coins
     async function fetchCurrentVolumeData() {
         try {
             const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,dogecoin,solana&vs_currencies=usd&include_24hr_vol=true');
             const data = await response.json();
-            console.log('Current volume data:', data); // Debug: Log current volume data
+            console.log('Current volume data:', data);
             return data;
         } catch (error) {
             console.error('Error fetching current volume data:', error);
@@ -183,20 +177,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    fetchCurrentVolumeData().then(volumeData => {
-        // Ensure the chart container exists
+    async function fetchMonthlyVolumeData(coinId) {
+        try {
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=90&interval=daily`);
+            const data = await response.json();
+            return data.total_volumes;
+        } catch (error) {
+            console.error('Error fetching monthly volume data:', error);
+            return [];
+        }
+    }
+
+    async function fetchDailyVolumeData(coinId) {
+        try {
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=30&interval=hourly`);
+            const data = await response.json();
+            return data.total_volumes;
+        } catch (error) {
+            console.error('Error fetching daily volume data:', error);
+            return [];
+        }
+    }
+
+    async function fetchHourlyVolumeData(coinId) {
+        try {
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=1&interval=hourly`);
+            const data = await response.json();
+            return data.total_volumes;
+        } catch (error) {
+            console.error('Error fetching hourly volume data:', error);
+            return [];
+        }
+    }
+
+    fetchCurrentVolumeData().then(async volumeData => {
         if (!document.getElementById('drilldownChart')) {
             console.error('Chart container not found');
             return;
         }
 
-        // Display volume data in a drilldown chart
-        Highcharts.chart('drilldownChart', {
+        // Prepare monthly data for each coin
+        const monthlyData = {
+            bitcoin: await fetchMonthlyVolumeData('bitcoin'),
+            ethereum: await fetchMonthlyVolumeData('ethereum'),
+            dogecoin: await fetchMonthlyVolumeData('dogecoin'),
+            solana: await fetchMonthlyVolumeData('solana')
+        };
+
+        // Format monthly data for each coin
+        const getMonthlySeriesData = (coinData) => {
+            return coinData.map(item => {
+                const date = new Date(item[0]);
+                return {
+                    name: date.toLocaleDateString(),
+                    y: item[1] / 1e9,
+                    drilldown: `daily-${date.getTime()}`
+                };
+            });
+        };
+
+        const chart = Highcharts.chart('drilldownChart', {
             chart: {
                 type: 'column'
             },
             title: {
-                text: 'Cryptocurrency 24h Volume'
+                text: 'Cryptocurrency Volume (Last 3 Months)'
             },
             xAxis: {
                 type: 'category'
@@ -224,28 +269,73 @@ document.addEventListener('DOMContentLoaded', () => {
                 data: [{
                     name: 'Bitcoin',
                     y: volumeData.bitcoin.usd_24h_vol / 1e9,
-                    drilldown: null
+                    drilldown: 'bitcoin-months'
                 }, {
                     name: 'Ethereum',
                     y: volumeData.ethereum.usd_24h_vol / 1e9,
-                    drilldown: null
+                    drilldown: 'ethereum-months'
                 }, {
                     name: 'Dogecoin',
                     y: volumeData.dogecoin.usd_24h_vol / 1e9,
-                    drilldown: null
+                    drilldown: 'dogecoin-months'
                 }, {
                     name: 'Solana',
                     y: volumeData.solana.usd_24h_vol / 1e9,
-                    drilldown: null
+                    drilldown: 'solana-months'
                 }]
             }],
             drilldown: {
-                series: [] // No drilldown data for now
+                series: [
+                    {
+                        id: 'bitcoin-months',
+                        name: 'Bitcoin Monthly Volume',
+                        data: getMonthlySeriesData(monthlyData.bitcoin)
+                    },
+                    {
+                        id: 'ethereum-months',
+                        name: 'Ethereum Monthly Volume',
+                        data: getMonthlySeriesData(monthlyData.ethereum)
+                    },
+                    {
+                        id: 'dogecoin-months',
+                        name: 'Dogecoin Monthly Volume',
+                        data: getMonthlySeriesData(monthlyData.dogecoin)
+                    },
+                    {
+                        id: 'solana-months',
+                        name: 'Solana Monthly Volume',
+                        data: getMonthlySeriesData(monthlyData.solana)
+                    }
+                ]
+            },
+            events: {
+                drilldown: async function(e) {
+                    if (!e.seriesOptions) {
+                        const point = e.point;
+                        let seriesData;
+                        
+                        if (point.drilldown.startsWith('daily-')) {
+                            const timestamp = point.drilldown.split('-')[1];
+                            const coinId = e.point.series.name.toLowerCase().split(' ')[0];
+                            const hourlyData = await fetchHourlyVolumeData(coinId);
+                            
+                            seriesData = hourlyData.map(item => ({
+                                name: new Date(item[0]).toLocaleTimeString(),
+                                y: item[1] / 1e9
+                            }));
+                            
+                            this.addSeriesAsDrilldown(point, {
+                                name: '24 Hour Volume',
+                                id: point.drilldown,
+                                data: seriesData
+                            });
+                        }
+                    }
+                }
             }
         });
     });
 
-    // Update the table and bar chart every 2 seconds
     setInterval(async () => {
         const data = await fetchCryptoData();
         if (data) {
