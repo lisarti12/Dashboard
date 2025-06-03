@@ -10,20 +10,27 @@
     <script src="https://code.highcharts.com/modules/drilldown.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="script.js" defer></script>
+    <script src="https://code.highcharts.com/modules/bullet.js"></script>
     <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .container-fluid {
+            padding: 0.5rem;
+        }
         #lineChart {
             width: 100% !important;
             height: 100% !important;
         }
-        
+        #cryptoTable td:last-child {
+            width: 120px;
+            padding: 8px 4px;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Crypto Dashboard</a>
-        </div>
-    </nav>
 
     <div class="container-fluid mt-1">
         <div class="row text-center mb-1">
@@ -75,6 +82,7 @@
                                     <th>Market Cap</th>
                                     <th>Current Price</th>
                                     <th>Volume</th>
+                                    <th>Trend</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -84,6 +92,7 @@
                                     <td id="btcMarketCap">Loading...</td>
                                     <td id="btcPrice">Loading...</td>
                                     <td id="btcVolume">Loading...</td>
+                                    <td><div id="sparkline-btc"></div></td>
                                 </tr>
                                 <tr data-coin="ethereum">
                                     <td>Ethereum</td>
@@ -91,6 +100,7 @@
                                     <td id="ethMarketCap">Loading...</td>
                                     <td id="ethPrice">Loading...</td>
                                     <td id="ethVolume">Loading...</td>
+                                    <td><div id="sparkline-eth"></div></td>
                                 </tr>
                                 <tr data-coin="dogecoin">
                                     <td>Dogecoin</td>
@@ -98,6 +108,7 @@
                                     <td id="dogeMarketCap">Loading...</td>
                                     <td id="dogePrice">Loading...</td>
                                     <td id="dogeVolume">Loading...</td>
+                                    <td><div id="sparkline-doge"></div></td>
                                 </tr>
                                 <tr data-coin="solana">
                                     <td>Solana</td>
@@ -105,6 +116,7 @@
                                     <td id="solMarketCap">Loading...</td>
                                     <td id="solPrice">Loading...</td>
                                     <td id="solVolume">Loading...</td>
+                                    <td><div id="sparkline-sol"></div></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -122,7 +134,7 @@
             </div>
             <div class="col-md-6 mb-1">
                 <div class="card shadow-sm">
-                    <div class="card-body p-1 d-flex justify-content-center" style="height: 300px; width: 650px;">
+                    <div class="card-body p-1 d-flex justify-content-center" style="height: 300px; width: 550px;">
                         <canvas id="lineChart" style="width: 80%; height: 100%;"></canvas>
                     </div>
                 </div>
@@ -131,6 +143,17 @@
                 <div class="card shadow-sm">
                     <div class="card-body p-1 d-flex justify-content-center">
                         <div id="drilldownChart" style="width:80%; height:250px;"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Add this before the last closing div in the container-fluid -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="card shadow-sm">
+
+                        <div class="card-body p-1">
+                            <div id="bulletChart" style="height: 500px; width: 550px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
