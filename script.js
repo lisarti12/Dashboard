@@ -134,18 +134,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchHistoricalData(coinId) {
         try {
-            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=365`);
+            const url = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=365`;
+            console.log(`Fetching historical data from: ${url}`);
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
+            console.log('Fetched historical data:', data);
             return data.prices;
         } catch (error) {
-            console.error('Error fetching historical data:', error);
+            console.error(`Error fetching historical data for ${coinId}:`, error);
             return [];
         }
     }
 
     function updateLineChart(prices) {
+        if (!prices || prices.length === 0) {
+            console.error('No prices available to update the chart.');
+            return;
+        }
+
         const labels = prices.map(price => new Date(price[0]).toLocaleDateString());
         const data = prices.map(price => price[1]);
+
+        console.log('Updating line chart with labels:', labels);
+        console.log('Updating line chart with data:', data);
 
         lineChart.data.labels = labels;
         lineChart.data.datasets[0].data = data;
@@ -155,11 +169,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#cryptoTable tbody tr').forEach(row => {
         row.addEventListener('click', debounce(async function () {
             const selectedCoin = this.getAttribute('data-coin');
+            console.log(`Selected coin: ${selectedCoin}`);
+
             const data = await fetchCryptoData();
-            updateCharts(selectedCoin, data);
+            if (data) {
+                updateCharts(selectedCoin, data);
+            }
 
             const historicalPrices = await fetchHistoricalData(selectedCoin);
-            updateLineChart(historicalPrices);
+            console.log('Historical prices:', historicalPrices);
+
+            if (historicalPrices.length > 0) {
+                updateLineChart(historicalPrices);
+            } else {
+                console.error('No historical data available for:', selectedCoin);
+            }
         }, 500));
     });
 
@@ -343,5 +367,191 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCharts(null, data);
         }
     }, 60000);
+
+    function generateRandomPrice(min, max) {
+        return (Math.random() * (max - min) + min).toFixed(2);
+    }
+
+    let bulletChart;
+
+    function createBulletChart() {
+        if (!document.getElementById('bulletChart')) {
+            console.error('Bullet chart container not found');
+            return;
+        }
+
+        bulletChart = Highcharts.chart('bulletChart', {
+            chart: {
+                inverted: true,
+                marginLeft: 135,
+                type: 'bullet'
+            },
+            title: {
+                text: 'Coin Transactions'
+            },
+            xAxis: {
+                categories: ['<span class="hc-cat-title">Bitcoin</span><br/>',
+                             '<span class="hc-cat-title">Ethereum</span><br/>',
+                             '<span class="hc-cat-title">Solana</span><br/>',
+                             '<span class="hc-cat-title">Dogecoin</span><br/>']
+            },
+            yAxis: {
+                gridLineWidth: 0,
+                plotBands: [{
+                    from: 0,
+                    to: 100000,
+                    color: '#eee'
+                }],
+                title: null,
+                type: 'logarithmic',
+                min: 0.1,
+                max: 100000
+            },
+            series: [{
+                data: [{
+                    y: parseFloat(generateRandomPrice(94000, 97000)),
+                    
+                }, {
+                    y: parseFloat(generateRandomPrice(3400, 3700)),
+                    
+                }, {
+                    y: parseFloat(generateRandomPrice(190, 230)),
+                    
+                }, {
+                    y: parseFloat(generateRandomPrice(0.37, 0.4)),
+                    
+                }]
+            }],
+            tooltip: {
+                pointFormat: '<b>{point.y}</b>'
+            }
+        });
+    }
+
+    function updateBulletChart() {
+        if (bulletChart) {
+            bulletChart.series[0].setData([{
+                y: parseFloat(generateRandomPrice(94000, 97000)),
+                
+            }, {
+                y: parseFloat(generateRandomPrice(3400, 3700)),
+                
+            }, {
+                y: parseFloat(generateRandomPrice(190, 230)),
+                
+            }, {
+                y: parseFloat(generateRandomPrice(0.37, 0.4)),
+                
+            }]);
+        }
+    }
+
+    createBulletChart();
+    setInterval(updateBulletChart, 1000);
+
+    // Function to generate random sparkline data
+    function generateSparklineData() {
+        return Array.from({ length: 20 }, () => Math.random() * 10);
+    }
+
+    // Function to create sparkline
+    function createSparkline(containerId, data) {
+        Highcharts.SparkLine(document.getElementById(containerId), {
+            series: [{
+                data: data,
+                lineWidth: 1,
+                marker: {
+                    enabled: false
+                }
+            }],
+            tooltip: {
+                enabled: false
+            },
+            chart: {
+                backgroundColor: null,
+                borderWidth: 0,
+                type: 'line',
+                margin: [2, 0, 2, 0],
+                width: 120,
+                height: 20,
+                style: {
+                    overflow: 'visible'
+                }
+            },
+            title: {
+                text: ''
+            },
+            credits: {
+                enabled: false
+            },
+            xAxis: {
+                labels: {
+                    enabled: false
+                },
+                title: {
+                    text: null
+                },
+                startOnTick: false,
+                endOnTick: false,
+                tickPositions: []
+            },
+            yAxis: {
+                endOnTick: false,
+                startOnTick: false,
+                labels: {
+                    enabled: false
+                },
+                title: {
+                    text: null
+                },
+                tickPositions: [0]
+            },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    lineWidth: 1,
+                    shadow: false,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    marker: {
+                        radius: 1,
+                        states: {
+                            hover: {
+                                radius: 2
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize sparklines
+    function initializeSparklines() {
+        const coins = ['btc', 'eth', 'doge', 'sol'];
+        coins.forEach(coin => {
+            createSparkline(`sparkline-${coin}`, generateSparklineData());
+        });
+    }
+
+    // Update sparklines periodically
+    function updateSparklines() {
+        const coins = ['btc', 'eth', 'doge', 'sol'];
+        coins.forEach(coin => {
+            createSparkline(`sparkline-${coin}`, generateSparklineData());
+        });
+    }
+
+    // Initialize sparklines
+    initializeSparklines();
+
+    // Update sparklines every 3 seconds
+    setInterval(updateSparklines, 3000);
+
+   
+    
 });
 
